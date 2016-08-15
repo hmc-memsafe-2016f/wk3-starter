@@ -17,6 +17,22 @@ macro_rules! assert_expected_eq_actual {
 }
 
 mod required {
+    mod filter_one {
+        use super::super::{DB,filter_two};
+
+        fn always_true(_: &i32) -> bool { true }
+
+        fn is_positive(i: &i32) -> bool { *i > 0 }
+
+        #[test]
+        #[allow(unused_variables)]
+        fn simple() {
+            let a = DB::new(vec![5]);
+            let view_a = a.select_where(&always_true);
+            let view_a_2 = filter_one(&view_a, is_positive);
+        }
+    }
+
     mod filter_two {
         use super::super::{DB,filter_two};
 
