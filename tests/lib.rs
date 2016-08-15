@@ -66,14 +66,17 @@ mod required {
         #[test]
         fn check_lifetimes() {
             let a = DB::new(vec![0, 5, 0, 0]);
-            let view_a = a.select_where(&is_positive);
             let view_a_2 =
             {
                 let b = DB::new(vec![6, -5, -7, 3, -1]);
                 let view_b = b.select_where(&is_positive);
-                let (view_a_2, view_b_2) = filter_two(&view_a, &view_b, &always_true);
-                assert_expected_eq_actual!(vec![6, 3],
-                                           view_b_2.into_iter().cloned().collect::<Vec<_>>());
+                let view_a_2 = {
+                    let view_a = a.select_where(&is_positive);
+                    let (view_a_2, view_b_2) = filter_two(&view_a, &view_b, &always_true);
+                    assert_expected_eq_actual!(vec![6, 3],
+                                               view_b_2.into_iter().cloned().collect::<Vec<_>>());
+                    view_a_2
+                };
                 view_a_2
             };
             assert_expected_eq_actual!(vec![5],
