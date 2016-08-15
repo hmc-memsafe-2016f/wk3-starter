@@ -1,6 +1,6 @@
 extern crate wk3;
 
-pub use wk3::{DB,DBView,filter_two};
+pub use wk3::{DB,DBView,filter_one,filter_two};
 
 
 // This macro is an assertion with nicely formatted failure output
@@ -18,7 +18,7 @@ macro_rules! assert_expected_eq_actual {
 
 mod required {
     mod filter_one {
-        use super::super::{DB,filter_two};
+        use super::super::{DB,filter_one};
 
         fn always_true(_: &i32) -> bool { true }
 
@@ -194,6 +194,22 @@ mod required {
             assert_expected_eq_actual!(v_filtered.len(), x_view.len());
             assert_expected_eq_actual!(v_filtered, x_view.into_iter().cloned().collect::<Vec<_>>());
         }
+
+        #[test]
+        fn check_lifetimes() {
+            let v: Vec<_> = (-100..100).map(NoCopy).collect();
+            let filter = is_even;
+            let filter2 = is_positive;
+            let x = DB::new(v.clone());
+            let x_view_2 = {
+                let x_view = x.select_where(filter);
+                x_view.select_where(filter2)
+            };
+            let v_filtered = v.into_iter().filter(filter).filter(filter2).collect::<Vec<_>>();
+            assert_expected_eq_actual!(v_filtered.len(), x_view_2.len());
+            assert_expected_eq_actual!(v_filtered, x_view_2.into_iter().cloned().collect::<Vec<_>>());
+        }
+
     }
 
     mod db_select_mut {
