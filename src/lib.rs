@@ -5,13 +5,14 @@ pub struct DB<T> {
 
 /// An immutably borrowed subset of a DB
 ///
-/// NB: You will need to be explcit about the liftimes in this struct
+/// NB: (nota bene, or "take special note"): You will need to be explcit about the liftimes in this
+/// struct
 #[derive(Debug, PartialEq, Eq)]
 pub struct DBView<T> {
     entries: Vec<&T>,
 }
 
-/// An immutably borrowed subset of a DB
+/// An mutably borrowed subset of a DB
 ///
 /// NB: You will need to be explcit about the liftimes in this struct
 #[derive(Debug, PartialEq, Eq)]
@@ -20,9 +21,7 @@ pub struct DBViewMut<T> {
 }
 
 /// Filters a DBView using the the given predicate.
-///
-/// NB: (nota bene, or "take special note"): You should modify the signature so that there is **no
-/// lifetime elision**
+/// NB: You should modify the signature so that there is **no lifetime elision**
 pub fn filter_one<T, F>(view: &DBView<T>, predicate: F) -> DBView< T>
     where F: Fn(&T) -> bool
 {
