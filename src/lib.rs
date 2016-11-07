@@ -21,7 +21,6 @@ pub struct DBViewMut<T> {
 }
 
 /// Filters a DBView using the the given predicate.
-/// NB: You should modify the signature so that there is **no lifetime elision**
 pub fn filter_one<T, F>(view: &DBView<T>, predicate: F) -> DBView< T>
     where F: Fn(&T) -> bool
 {
@@ -30,12 +29,10 @@ pub fn filter_one<T, F>(view: &DBView<T>, predicate: F) -> DBView< T>
 
 /// Filters two DBView structs using the same predicate, producing two separate results. This is
 /// the moral equivalent of doing the two filters separately.
-///
-/// NB: Modify the signature so that there is **no lifetime elision**
 pub fn filter_two<T, F>(view_a: &DBView<T>,
-                                          view_b: &DBView<T>,
-                                          predicate: F)
-                                          -> (DBView<T>, DBView<T>)
+                        view_b: &DBView<T>,
+                        predicate: F)
+                        -> (DBView<T>, DBView<T>)
     where F: Fn(&T) -> bool
 {
     unimplemented!()
@@ -48,8 +45,6 @@ impl<T> DB<T> {
     }
 
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
-    ///
-    /// NB: Modify the signature so that there is **no lifetime elision**
     pub fn select_where<F>(&self, predicate: F) -> DBView<T>
         where F: Fn(&T) -> bool
     {
@@ -57,8 +52,6 @@ impl<T> DB<T> {
     }
 
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
-    ///
-    /// NB: Modify the signature so that there is **no lifetime elision**
     pub fn select_where_mut<F>(&mut self, predicate: F) -> DBViewMut<T>
         where F: Fn(&T) -> bool
     {
@@ -66,22 +59,16 @@ impl<T> DB<T> {
     }
 
     /// Returns a DBView consisting on the entirety of `self`
-    ///
-    /// NB: Modify the signature so that there is **no lifetime elision**
     pub fn as_view(&self) -> DBView<T> {
         unimplemented!()
     }
 
     /// Returns a DBView consisting on the entirety of `self`
-    ///
-    /// NB: Modify the signature so that there is **no lifetime elision**
     pub fn as_view_mut(&mut self) -> DBViewMut<T> {
         unimplemented!()
     }
 
     /// Returns the number of entries in the DB
-    ///
-    /// NB: Modify the signature so that there is **no lifetime elision**
     pub fn len(&self) -> usize {
         unimplemented!()
     }
@@ -89,8 +76,6 @@ impl<T> DB<T> {
 
 impl<T> DBView<T> {
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
-    ///
-    /// NB: Modify the signature so that there is **no lifetime elision**
     pub fn select_where<F>(&self, predicate: F) -> DBView<T>
         where F: Fn(&T) -> bool
     {
@@ -98,8 +83,6 @@ impl<T> DBView<T> {
     }
 
     /// Returns the number of entries in the DBView
-    ///
-    /// NB: Modify the signature so that there is **no lifetime elision**
     pub fn len(&self) -> usize {
         unimplemented!()
     }
@@ -107,8 +90,6 @@ impl<T> DBView<T> {
 
 impl<T> DBViewMut<T> {
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
-    ///
-    /// NB: Modify the signature so that there is **no lifetime elision**
     pub fn select_where_mut<F>(self, predicate: F) -> DBViewMut<T>
         where F: Fn(&T) -> bool
     {
@@ -116,35 +97,34 @@ impl<T> DBViewMut<T> {
     }
 
     /// Returns the number of entries in the DBView
-    ///
-    /// NB: Modify the signature so that there is **no lifetime elision**
     pub fn len(&self) -> usize {
         unimplemented!()
     }
 }
 
-
-impl<T> IntoIterator for DB<T> {
-    type Item = T;
-    // TODO
-}
-
-impl<T> IntoIterator for &DB<T> {
-    type Item = &T;
-    // TODO
-}
-
-impl<T> IntoIterator for &mut DB<T> {
-    type Item = &mut T;
-    // TODO
-}
-
-impl<T> IntoIterator for DBView<T> {
-    type Item = &T;
-    // TODO
-}
-
-impl<T> IntoIterator for DBViewMut<T> {
-    type Item = &mut T;
-    // TODO
-}
+// Bonus A
+//
+// impl<T> IntoIterator for DB<T> {
+//     type Item = T;
+//     // TODO
+// }
+//
+// impl<T> IntoIterator for &DB<T> {
+//     type Item = &T;
+//     // TODO
+// }
+//
+// impl<T> IntoIterator for &mut DB<T> {
+//     type Item = &mut T;
+//     // TODO
+// }
+//
+// impl<T> IntoIterator for DBView<T> {
+//     type Item = &T;
+//     // TODO
+// }
+//
+// impl<T> IntoIterator for DBViewMut<T> {
+//     type Item = &mut T;
+//     // TODO
+// }
