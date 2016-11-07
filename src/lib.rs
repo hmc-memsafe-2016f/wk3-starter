@@ -26,8 +26,8 @@ pub struct DBViewMut<'a, T: 'a> {
 ///
 /// NB: (nota bene, or 'take special note'): You should modify the signature so that there is **no
 /// lifetime elision**
-pub fn filter_one<'a, 'ra, T, F>(view: &'ra DBView<'a, T>, predicate: F) -> DBView<'a, T>
-    where F: for<'c> Fn(&'c T) -> bool
+pub fn filter_one<'a, T, F>(view: &DBView<'a, T>, predicate: F) -> DBView<'a, T>
+    where F: Fn(&T) -> bool
 {
     view.select_where(predicate)
 }
@@ -36,11 +36,11 @@ pub fn filter_one<'a, 'ra, T, F>(view: &'ra DBView<'a, T>, predicate: F) -> DBVi
 /// the moral equivalent of doing the two filters separately.
 ///
 /// NB: Modify the signature so that there is **no lifetime elision**
-pub fn filter_two<'a, 'b, 'ra, 'rb, T, F>(view_a: &'ra DBView<'a, T>,
-                                          view_b: &'rb DBView<'b, T>,
-                                          predicate: F)
-                                          -> (DBView<'a, T>, DBView<'b, T>)
-    where F: for<'c> Fn(&'c T) -> bool
+pub fn filter_two<'a, 'b, T, F>(view_a: &DBView<'a, T>,
+                                view_b: &DBView<'b, T>,
+                                predicate: F)
+                                -> (DBView<'a, T>, DBView<'b, T>)
+    where F: Fn(&T) -> bool
 {
     (view_a.select_where(&predicate), view_b.select_where(&predicate))
 }
@@ -54,8 +54,8 @@ impl<T> DB<T> {
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
     ///
     /// NB: Modify the signature so that there is **no lifetime elision**
-    pub fn select_where<'a, F>(&'a self, predicate: F) -> DBView<'a, T>
-        where F: for<'b> Fn(&'b T) -> bool
+    pub fn select_where<F>(&self, predicate: F) -> DBView<T>
+        where F: Fn(&T) -> bool
     {
         DBView { entries: self.data.iter().filter(|item| predicate(item)).collect() }
     }
@@ -63,8 +63,8 @@ impl<T> DB<T> {
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
     ///
     /// NB: Modify the signature so that there is **no lifetime elision**
-    pub fn select_where_mut<'a, F>(&'a mut self, predicate: F) -> DBViewMut<'a, T>
-        where F: for<'b> Fn(&'b T) -> bool
+    pub fn select_where_mut<F>(&mut self, predicate: F) -> DBViewMut<T>
+        where F: Fn(&T) -> bool
     {
         DBViewMut { entries: self.data.iter_mut().filter(|item| predicate(item)).collect() }
     }
@@ -72,21 +72,21 @@ impl<T> DB<T> {
     /// Returns a DBView consisting on the entirety of `self`
     ///
     /// NB: Modify the signature so that there is **no lifetime elision**
-    pub fn as_view<'a>(&'a self) -> DBView<'a, T> {
+    pub fn as_view(&self) -> DBView<T> {
         DBView { entries: self.data.iter().collect() }
     }
 
     /// Returns a DBView consisting on the entirety of `self`
     ///
     /// NB: Modify the signature so that there is **no lifetime elision**
-    pub fn as_view_mut<'a>(&'a mut self) -> DBViewMut<'a, T> {
+    pub fn as_view_mut(&mut self) -> DBViewMut<T> {
         DBViewMut { entries: self.data.iter_mut().collect() }
     }
 
     /// Returns the number of entries in the DB
     ///
     /// NB: Modify the signature so that there is **no lifetime elision**
-    pub fn len<'a>(&'a self) -> usize {
+    pub fn len(&self) -> usize {
         self.data.len()
     }
 }
@@ -95,8 +95,8 @@ impl<'a, T> DBView<'a, T> {
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
     ///
     /// NB: Modify the signature so that there is **no lifetime elision**
-    pub fn select_where<'b, F>(&'b self, predicate: F) -> DBView<'a, T>
-        where F: for<'c> Fn(&'c T) -> bool
+    pub fn select_where<F>(&self, predicate: F) -> DBView<'a, T>
+        where F: Fn(&T) -> bool
     {
         DBView { entries: self.entries.iter().cloned().filter(|item| predicate(item)).collect() }
     }
@@ -104,7 +104,7 @@ impl<'a, T> DBView<'a, T> {
     /// Returns the number of entries in the DBView
     ///
     /// NB: Modify the signature so that there is **no lifetime elision**
-    pub fn len<'b>(&'b self) -> usize {
+    pub fn len(&self) -> usize {
         self.entries.len()
     }
 }
@@ -114,7 +114,7 @@ impl<'a, T> DBViewMut<'a, T> {
     ///
     /// NB: Modify the signature so that there is **no lifetime elision**
     pub fn select_where_mut<F>(self, predicate: F) -> DBViewMut<'a, T>
-        where F: for<'c> Fn(&'c T) -> bool
+        where F: Fn(&T) -> bool
     {
         DBViewMut {
             entries: self.entries
@@ -127,7 +127,7 @@ impl<'a, T> DBViewMut<'a, T> {
     /// Returns the number of entries in the DBView
     ///
     /// NB: Modify the signature so that there is **no lifetime elision**
-    pub fn len<'b>(&'b self) -> usize {
+    pub fn len(&self) -> usize {
         self.entries.len()
     }
 }
@@ -170,5 +170,16 @@ impl<'a, T> IntoIterator for DBViewMut<'a, T> {
     type IntoIter = vec::IntoIter<&'a mut T>;
     fn into_iter(self) -> Self::IntoIter {
         self.entries.into_iter()
+    }
+}
+
+struct Closure<E, F> {
+    environment: E,
+    func: F,
+}
+
+impl<E, F, O> Closure<E, F> where F: for <'a> Fn(&'a E) -> &'a O {
+    fn call(&self) -> &O {
+        (self.func)(&self.environment)
     }
 }
