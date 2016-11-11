@@ -8,16 +8,16 @@ pub struct DB<T> {
 /// NB: (nota bene, or "take special note"): You will need to be explcit about the liftimes in this
 /// struct
 #[derive(Debug, PartialEq, Eq)]
-pub struct DBView<T> {
-    entries: Vec<&T>,
+pub struct DBView<'a, T> {
+    entries: Vec<'a, &T>,
 }
 
 /// An mutably borrowed subset of a DB
 ///
 /// NB: You will need to be explcit about the liftimes in this struct
 #[derive(Debug, PartialEq, Eq)]
-pub struct DBViewMut<T> {
-    entries: Vec<&mut T>,
+pub struct DBViewMut<'a, T> {
+    entries: Vec<'a, &mut T>,
 }
 
 /// Filters a DBView using the the given predicate.
