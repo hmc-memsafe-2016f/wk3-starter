@@ -9,7 +9,7 @@ pub struct DB<T> {
 /// struct
 #[derive(Debug, PartialEq, Eq)]
 pub struct DBView<'a, T> {
-    entries: Vec<'a, &T>,
+    entries: Vec<&'a T>,
 }
 
 /// An mutably borrowed subset of a DB
@@ -17,7 +17,7 @@ pub struct DBView<'a, T> {
 /// NB: You will need to be explcit about the liftimes in this struct
 #[derive(Debug, PartialEq, Eq)]
 pub struct DBViewMut<'a, T> {
-    entries: Vec<'a, &mut T>,
+    entries: Vec<&'a mut T>,
 }
 
 /// Filters a DBView using the the given predicate.
@@ -41,36 +41,49 @@ pub fn filter_two<T, F>(view_a: &DBView<T>,
 impl<T> DB<T> {
     /// Creates a DB from the given list of entries
     pub fn new(data: Vec<T>) -> DB<T> {
-        unimplemented!()
+        DB{data: data}
     }
 
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
-    pub fn select_where<F>(&self, predicate: F) -> DBView<T>
-        where F: Fn(&T) -> bool
+    pub fn select_where<'a, 'b, F>(&'a self, predicate: F) -> DBView<'b, T>
+        where F: Fn(&T) -> bool,
+              'a : 'b
     {
-        unimplemented!()
+        let dbv = DBView{entries: Vec::new()};
+        for x in &(self.data) {
+            if predicate(x) {
+                dbv.entries.push(x);
+            }
+        }
+        dbv
     }
 
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
-    pub fn select_where_mut<F>(&mut self, predicate: F) -> DBViewMut<T>
-        where F: Fn(&T) -> bool
+    pub fn select_where_mut<'a, 'b, F>(&'a mut self, predicate: F) -> DBViewMut<'b, T>
+        where F: Fn(&T) -> bool, 'a : 'b
     {
-        unimplemented!()
+        let dbvm = DBViewMut{entries: Vec::new()};
+        for x in &mut(self.data) {
+            if predicate(x) {
+                dbvm.entries.push(x);
+            }
+        }
+        dbvm
     }
 
     /// Returns a DBView consisting on the entirety of `self`
     pub fn as_view(&self) -> DBView<T> {
-        unimplemented!()
+        self.select_where(|_| true)
     }
 
     /// Returns a DBView consisting on the entirety of `self`
     pub fn as_view_mut(&mut self) -> DBViewMut<T> {
-        unimplemented!()
+        self.select_where_mut(|_| true)
     }
 
     /// Returns the number of entries in the DB
     pub fn len(&self) -> usize {
-        unimplemented!()
+        self.data.len()
     }
 }
 
