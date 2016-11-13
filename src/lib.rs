@@ -83,8 +83,8 @@ impl<'a, T> DBView<'a, T> {
     pub fn select_where<F>(&self, predicate: F) -> DBView<'a, T>
         where F: Fn(&T) -> bool
     {
-        DBView{entries: self.entries.clone()
-            .into_iter().filter(|x| predicate(x)).collect()}
+        DBView{entries: self.entries
+            .iter().filter(|x| predicate(x)).cloned().collect()}
     }
 
     /// Returns the number of entries in the DBView
