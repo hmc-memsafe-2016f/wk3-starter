@@ -16,7 +16,7 @@ macro_rules! assert_expected_eq_actual {
     })
 }
 
-mod required {
+mod iterator_bonus {
     mod filter_one {
         use super::super::{DB,filter_one};
 
@@ -30,6 +30,16 @@ mod required {
             let a = DB::new(vec![5]);
             let view_a = a.select_where(&always_true);
             let view_a_2 = filter_one(&view_a, is_positive);
+        }
+
+        #[test]
+        #[allow(unused_variables)]
+        fn underlying_data() {
+            let a = DB::new(vec![5]);
+            let view_a_2 = {
+                let view_a = a.select_where(&always_true);
+                filter_one(&view_a, is_positive)
+            };
         }
     }
 
