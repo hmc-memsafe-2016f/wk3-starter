@@ -47,7 +47,7 @@ impl<T> DB<T> {
         self.as_view().select_where(predicate)
     }
 
-    /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
+    /// Creates a new DBViewMut containing all entries in `self` which satisfy `predicate`
     pub fn select_where_mut<'a, F>(&'a mut self, predicate: F) -> DBViewMut<'a, T>
         where F: Fn(&T) -> bool
     {
@@ -63,7 +63,7 @@ impl<T> DB<T> {
         ret
     }
 
-    /// Returns a DBView consisting on the entirety of `self`
+    /// Returns a DBViewMut consisting on the entirety of `self`
     pub fn as_view_mut<'a>(&'a mut self) -> DBViewMut<'a, T> {
         let mut ret = DBViewMut{entries: Vec::new()};
         for v in &mut self.data {
@@ -94,7 +94,7 @@ impl<'a, T> DBView<'a, T> {
 }
 
 impl<'a, T> DBViewMut<'a, T> {
-    /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
+    /// Creates a new DBViewMut containing all entries in `self` which satisfy `predicate`
     pub fn select_where_mut<F>(self, predicate: F) -> DBViewMut<'a, T>
         where F: Fn(&T) -> bool
     {
