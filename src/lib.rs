@@ -20,25 +20,43 @@ pub struct DBViewMut<'a, T:'a> {
     entries: Vec<&'a mut T>,
 }
 
-/*
+// TODO change these functions to use iter filter and iter collect instead
 /// Filters a DBView using the the given predicate.
-pub fn filter_one<T, F>(view: &DBView<T>, predicate: F) -> DBView< T>
+pub fn filter_one<'a, 'b, T, F>(view: &'b DBView<'a, T>,
+                                predicate: F) -> DBView<'a, T>
     where F: Fn(&T) -> bool
 {
-    unimplemented!()
+    let mut vec : Vec<&'a T> = Vec::new();
+    for elem in &view.entries {
+        if predicate(elem) {
+            vec.push(elem)
+        }
+    }
+    DBView{entries: vec}
 }
 
 /// Filters two DBView structs using the same predicate, producing two separate
 /// results. This is the moral equivalent of doing the two filters separately.
-pub fn filter_two<T, F>(view_a: &DBView<T>,
-                        view_b: &DBView<T>,
+pub fn filter_two<'a, 'b, 'c, T, F>(view_a: &'c DBView<'a, T>,
+                        view_b: &DBView<'b, T>,
                         predicate: F)
-                        -> (DBView<T>, DBView<T>)
+                        -> (DBView<'a, T>, DBView<'b, T>)
     where F: Fn(&T) -> bool
 {
-    unimplemented!()
+    let mut vec_a : Vec<&'a T> = Vec::new();
+    let mut vec_b : Vec<&'b T> = Vec::new();
+    for elem in &view_a.entries {
+        if predicate(elem) {
+            vec_a.push(elem)
+        }
+    }
+    for elem in &view_b.entries {
+        if predicate(elem) {
+            vec_b.push(elem)
+        }
+    }
+    (DBView{entries: vec_a}, DBView{entries: vec_b})
 }
-*/
 
 impl<T> DB<T> {
     /// Creates a DB from the given list of entries
@@ -101,7 +119,7 @@ impl<T> DB<T> {
 impl<'a, T> DBView<'a, T> {
     /// Creates a new DBView containing all entries in `self`
     /// which satisfy `predicate`
-    pub fn select_where<F>(&self, predicate: F) -> DBView<T>
+    pub fn select_where<F>(&self, predicate: F) -> DBView<'a, T>
         where F: Fn(&T) -> bool
     {
         let mut vec : Vec<&'a T> = Vec::new();
