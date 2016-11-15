@@ -1,0 +1,1 @@
+In a_outlives_b, b is only live during the inner lexical scope, and a 

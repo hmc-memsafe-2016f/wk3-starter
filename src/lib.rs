@@ -91,10 +91,11 @@ impl<'a, T> DBView<'a, T> {
 
 impl<'a, T> DBViewMut<'a, T> {
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
-    pub fn select_where_mut<F>(self, predicate: F) -> DBViewMut<'a, T>
+    pub fn select_where_mut<F>(mut self, predicate: F) -> DBViewMut<'a, T>
         where F: Fn(&T) -> bool
     {
-        DBViewMut{entries: self.entries.iter_mut().cloned().filter(|x| predicate(x)).collect()}
+        self.entries.retain(|x| predicate(x));
+        self
     }
 
     /// Returns the number of entries in the DBView
@@ -103,29 +104,55 @@ impl<'a, T> DBViewMut<'a, T> {
     }
 }
 
-// Bonus A
-//
-// impl<T> IntoIterator for DB<T> {
-//     type Item = T;
-//     // TODO
-// }
-//
-// impl<T> IntoIterator for &DB<T> {
-//     type Item = &T;
-//     // TODO
-// }
-//
-// impl<T> IntoIterator for &mut DB<T> {
-//     type Item = &mut T;
-//     // TODO
-// }
-//
-// impl<T> IntoIterator for DBView<T> {
-//     type Item = &T;
-//     // TODO
-// }
-//
-// impl<T> IntoIterator for DBViewMut<T> {
-//     type Item = &mut T;
-//     // TODO
-// }
+ //Bonus A
+
+ impl<T> IntoIterator for DB<T> {
+     type Item = T;
+     type IntoIter = ::std::vec::IntoIter<T>;
+
+     fn into_iter(self) -> Self::IntoIter
+     {
+     	self.data.into_iter()
+     }
+
+ }
+
+ impl<'a, T> IntoIterator for &'a DB<T> {
+     type Item = &'a T;
+     type IntoIter = ::std::slice::Iter<'a, T>;
+
+     fn into_iter(self) -> Self::IntoIter
+     {
+     	(&self.data).into_iter()
+     }
+ }
+
+ impl<'a, T> IntoIterator for &'a mut DB<T> {
+     type Item = &'a mut T;
+     type IntoIter = ::std::slice::IterMut<'a, T>;
+
+  	fn into_iter(self) -> Self::IntoIter
+    {
+    	(&mut self.data).into_iter()
+    }
+ }
+
+ impl<'a, T> IntoIterator for DBView<'a, T> {
+     type Item = &'a T;
+     type IntoIter = ::std::vec::IntoIter<&'a T>;
+
+	fn into_iter(self) -> Self::IntoIter
+    {
+    	self.entries.into_iter()
+    }
+ }
+
+ impl<'a, T> IntoIterator for DBViewMut<'a, T> {
+     type Item = &'a mut T;
+     type IntoIter = ::std::vec::IntoIter<&'a mut T>;
+
+     fn into_iter(self) -> Self::IntoIter
+     {
+     	self.entries.into_iter()
+     }
+ }
