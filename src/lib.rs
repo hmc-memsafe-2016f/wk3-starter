@@ -8,34 +8,34 @@ pub struct DB<T> {
 /// NB: (nota bene, or "take special note"): You will need to be explcit about the liftimes in this
 /// struct
 #[derive(Debug, PartialEq, Eq)]
-pub struct DBView<'a, T> {
-    entries: Vec<&'a T>,
+pub struct DBView<'a, T:'a> {
+    entries: Vec<&'a T>
 }
 
 /// An mutably borrowed subset of a DB
 ///
 /// NB: You will need to be explcit about the liftimes in this struct
 #[derive(Debug, PartialEq, Eq)]
-pub struct DBViewMut<'a, T> {
+pub struct DBViewMut<'a, T> where T : 'a {
     entries: Vec<&'a mut T>,
 }
 
 /// Filters a DBView using the the given predicate.
-pub fn filter_one<T, F>(view: &DBView<T>, predicate: F) -> DBView< T>
+pub fn filter_one<'a, 'b, T, F>(view: &'b DBView<'a, T>, predicate: F) -> DBView<'a, T>
     where F: Fn(&T) -> bool
 {
-    unimplemented!()
+    view.select_where(predicate)
 }
 
 /// Filters two DBView structs using the same predicate, producing two separate results. This is
 /// the moral equivalent of doing the two filters separately.
-pub fn filter_two<T, F>(view_a: &DBView<T>,
-                        view_b: &DBView<T>,
+pub fn filter_two<'a, 'b, 'c, T, F>(view_a: &'c DBView<'a, T>,
+                        view_b: &'c DBView<'b, T>,
                         predicate: F)
-                        -> (DBView<T>, DBView<T>)
+                        -> (DBView<'a, T>, DBView<'b, T>)
     where F: Fn(&T) -> bool
 {
-    unimplemented!()
+    (view_a.select_where(&predicate), view_b.select_where(&predicate))
 }
 
 impl<T> DB<T> {
@@ -49,26 +49,26 @@ impl<T> DB<T> {
         where F: Fn(&T) -> bool,
               'a : 'b
     {
-        let dbv = DBView{entries: Vec::new()};
+        let mut entries_vec = Vec::new();
         for x in &(self.data) {
             if predicate(x) {
-                dbv.entries.push(x);
+                entries_vec.push(x);
             }
         }
-        dbv
+        DBView{entries: entries_vec}
     }
 
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
     pub fn select_where_mut<'a, 'b, F>(&'a mut self, predicate: F) -> DBViewMut<'b, T>
         where F: Fn(&T) -> bool, 'a : 'b
     {
-        let dbvm = DBViewMut{entries: Vec::new()};
+        let mut entries_vec = Vec::new();
         for x in &mut(self.data) {
             if predicate(x) {
-                dbvm.entries.push(x);
+                entries_vec.push(x);
             }
         }
-        dbvm
+        DBViewMut{entries: entries_vec}
     }
 
     /// Returns a DBView consisting on the entirety of `self`
@@ -87,31 +87,39 @@ impl<T> DB<T> {
     }
 }
 
-impl<T> DBView<T> {
+impl<'a, T> DBView<'a, T> {
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
-    pub fn select_where<F>(&self, predicate: F) -> DBView<T>
+    pub fn select_where<'b, F>(&'b self, predicate: F) -> DBView<'a, T>
         where F: Fn(&T) -> bool
     {
-        unimplemented!()
+        let mut entries_vec = Vec::new();
+        for x in & self.entries {
+            if predicate(x) {
+                entries_vec.push(*x);
+            }
+        }
+        DBView{entries: entries_vec}
     }
 
     /// Returns the number of entries in the DBView
     pub fn len(&self) -> usize {
-        unimplemented!()
+        self.entries.len()
     }
 }
 
-impl<T> DBViewMut<T> {
+impl<'a, T> DBViewMut<'a, T> {
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
-    pub fn select_where_mut<F>(self, predicate: F) -> DBViewMut<T>
+    pub fn select_where_mut<F>(self, predicate: F) -> DBViewMut<'a,T>
         where F: Fn(&T) -> bool
     {
-        unimplemented!()
+        // got idea to use retain from https://www.reddit.com/r/rust/comments/2u42oy/remove_elements_from_a_vector_based_on_a_condition/
+        // self.entries.retain(|&x| predicate(x)); <----- Why does this not work?
+        DBViewMut{entries: self.entries.into_iter().filter(|ref x| predicate(x)).collect::<Vec<_>>()}
     }
 
     /// Returns the number of entries in the DBView
     pub fn len(&self) -> usize {
-        unimplemented!()
+        self.entries.len()
     }
 }
 
