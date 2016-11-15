@@ -21,7 +21,7 @@ pub struct DBViewMut<'a, T: 'a> {
 }
 
 /// Filters a DBView using the the given predicate.
-pub fn filter_one<'a, 'b: 'a, T, F>(view: &'a DBView<'b, T>, predicate: F) -> DBView<'a, T>
+pub fn filter_one<'a, 'b: 'a, T, F>(view: &'a DBView<'b, T>, predicate: F) -> DBView<'b, T>
     where F: for<'c> Fn(&'c T) -> bool
 {
     view.select_where(predicate)
@@ -36,6 +36,7 @@ pub fn filter_two<'a, 'b, T, F>(view_a: &DBView<'a, T>,
     where F: for<'c> Fn(&'c T) -> bool
 {
     // couldn't get this to work like filter_one, or by calling filter_one
+    // Couldn't figure out the lifetime hierarchy
     (DBView::<'a, T>{entries: view_a.entries
                           .clone()
                           .into_iter()
