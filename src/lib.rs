@@ -172,14 +172,3 @@ impl<'a, T> IntoIterator for DBViewMut<'a, T> {
         self.entries.into_iter()
     }
 }
-
-struct Closure<E, F> {
-    environment: E,
-    func: F,
-}
-
-impl<E, F, O> Closure<E, F> where F: for <'a> Fn(&'a E) -> &'a O {
-    fn call(&self) -> &O {
-        (self.func)(&self.environment)
-    }
-}
