@@ -62,7 +62,7 @@ impl<T> DB<T> {
     }
 
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
-    pub fn select_where_mut<'a, 'b, F>(&'a mut self, predicate: F) -> DBViewMut<'a, T>
+    pub fn select_where_mut<'a, F>(&'a mut self, predicate: F) -> DBViewMut<'a, T>
         where F: for<'c> Fn(&'c T) -> bool
     {
         self.as_view_mut().select_where_mut(predicate)
@@ -96,8 +96,8 @@ impl<T> DB<T> {
 
 impl<'a, T> DBView<'a, T> {
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
-    pub fn select_where<F>(&'a self, predicate: F) -> DBView<'a, T>
-        where F: Fn(&T) -> bool
+    pub fn select_where<'b, F>(&'b self, predicate: F) -> DBView<'a, T>
+        where F: for<'c> Fn(&'c T) -> bool
     {
         DBView::<'a, T>{entries: self.entries
                             .iter()
@@ -107,7 +107,7 @@ impl<'a, T> DBView<'a, T> {
     }
 
     /// Returns the number of entries in the DBView
-    pub fn len(&'a self) -> usize {
+    pub fn len<'b>(&'b self) -> usize {
         self.entries.len()
     }
 }
@@ -115,7 +115,7 @@ impl<'a, T> DBView<'a, T> {
 impl<'a, T> DBViewMut<'a, T> {
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
     pub fn select_where_mut<F>(self, predicate: F) -> DBViewMut<'a, T>
-        where F: Fn(&T) -> bool
+        where F: for<'c> Fn(&'c T) -> bool
     {
         DBViewMut::<'a, T>{entries: self.entries
                                .into_iter()
@@ -124,7 +124,7 @@ impl<'a, T> DBViewMut<'a, T> {
     }
 
     /// Returns the number of entries in the DBView
-    pub fn len(&'a self) -> usize {
+    pub fn len<'b>(&'b self) -> usize {
         self.entries.len()
     }
 }
