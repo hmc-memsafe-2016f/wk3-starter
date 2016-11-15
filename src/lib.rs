@@ -126,28 +126,48 @@ impl<'a, T> DBViewMut<'a, T> {
 }
 
 // Bonus A
-//
-// impl<T> IntoIterator for DB<T> {
-//     type Item = T;
-//     // TODO
-// }
-//
-// impl<T> IntoIterator for &DB<T> {
-//     type Item = &T;
-//     // TODO
-// }
-//
-// impl<T> IntoIterator for &mut DB<T> {
-//     type Item = &mut T;
-//     // TODO
-// }
-//
-// impl<T> IntoIterator for DBView<T> {
-//     type Item = &T;
-//     // TODO
-// }
-//
-// impl<T> IntoIterator for DBViewMut<T> {
-//     type Item = &mut T;
-//     // TODO
-// }
+
+impl<T> IntoIterator for DB<T> {
+    type Item = T;
+    type IntoIter = std::vec::IntoIter<T>;
+
+    fn into_iter(self) -> std::vec::IntoIter<T> {
+        self.data.into_iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a DB<T> {
+    type Item = &'a T;
+    type IntoIter = std::slice::Iter<'a, T>;
+
+    fn into_iter(self) -> std::slice::Iter<'a, T> {
+        self.data.iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a mut DB<T> {
+    type Item = &'a mut T;
+    type IntoIter = std::slice::IterMut<'a, T>;
+
+    fn into_iter(self) -> std::slice::IterMut<'a, T> {
+        self.data.iter_mut()
+    }
+}
+
+impl<'a, T> IntoIterator for DBView<'a, T> {
+    type Item = &'a T;
+    type IntoIter = std::vec::IntoIter<&'a T>;
+
+    fn into_iter(self) -> std::vec::IntoIter<&'a T> {
+        self.entries.into_iter()
+    }
+}
+
+impl<'a, T> IntoIterator for DBViewMut<'a, T> {
+    type Item = &'a mut T;
+    type IntoIter = std::vec::IntoIter<&'a mut T>;
+
+    fn into_iter(self) -> std::vec::IntoIter<&'a mut T> {
+        self.entries.into_iter()
+    }
+}
