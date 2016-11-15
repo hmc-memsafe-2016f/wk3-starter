@@ -21,79 +21,56 @@ pub struct DBViewMut<'a, T: 'a> {
 }
 
 /// Filters a DBView using the the given predicate.
-pub fn filter_one<'a, 'b, T, F>(view: &'a DBView<'b, T>, predicate: F) -> DBView<'b, T>
-    where F: Fn(&'b T) -> bool
+pub fn filter_one<'a, 'b: 'a, T, F>(view: &'a DBView<'b, T>, predicate: F) -> DBView<'a, T>
+    where F: for<'c> Fn(&'c T) -> bool
 {
-    let mut new_view: DBView<'b, T> = DBView::new();
-    for record in & view.entries {
-        if predicate(record) {
-            new_view.entries.push(record);
-        }
-    }
-    new_view
+    view.select_where(predicate)
 }
 
 /// Filters two DBView structs using the same predicate, producing two separate results. This is
 /// the moral equivalent of doing the two filters separately.
-pub fn filter_two<'a, 'b, T, F>(view_a: &'a DBView<'b, T>,
-                        view_b: &'a DBView<'b, T>,
+pub fn filter_two<'a, 'b, T, F>(view_a: &DBView<'a, T>,
+                        view_b: &DBView<'b, T>,
                         predicate: F)
-                        -> (DBView<'b, T>, DBView<'b, T>)
-    where F: Fn(&'b T) -> bool
+                        -> (DBView<'a, T>, DBView<'b, T>)
+    where F: for<'c> Fn(&'c T) -> bool
 {
-    let mut new_view_a: DBView<'b, T> = DBView::new();
-    for record in & view_a.entries {
-        if predicate(record) {
-            new_view_a.entries.push(record);
-        }
-    }
-    let mut new_view_b: DBView<'b, T> = DBView::new();
-    for record in & view_b.entries {
-        if predicate(record) {
-            new_view_b.entries.push(record);
-        }
-    }
-    (new_view_a, new_view_b)
+    // couldn't get this to work like filter_one, or by calling filter_one
+    (DBView::<'a, T>{entries: view_a.entries
+                          .clone()
+                          .into_iter()
+                          .filter(|&x| predicate(x))
+                          .collect()},
+     DBView::<'b, T>{entries: view_b.entries
+                          .clone()
+                          .into_iter()
+                          .filter(|&x| predicate(x))
+                          .collect()})
 }
 
 impl<T> DB<T> {
     /// Creates a DB from the given list of entries
     pub fn new(data: Vec<T>) -> DB<T> {
-        DB{data: data}
+        DB::<T>{data: data}
     }
 
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
     pub fn select_where<'a, F>(&'a self, predicate: F) -> DBView<'a, T>
-        where F: Fn(&'a T) -> bool
+        where F: for<'c> Fn(&'c T) -> bool
     {
-        let mut new_view: DBView<'a, T> = DBView::new();
-        for record in & self.data {
-            if predicate(record) {
-                new_view.entries.push(record);
-            }
-        }
-
-        new_view
+        self.as_view().select_where(predicate)
     }
 
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
     pub fn select_where_mut<'a, 'b, F>(&'a mut self, predicate: F) -> DBViewMut<'a, T>
-        where F: Fn(&'a T) -> bool
+        where F: for<'c> Fn(&'c T) -> bool
     {
-        let mut new_view: DBViewMut<'a, T> = DBViewMut::new();
-
-        for record in &mut self.data {
-            if predicate(record) {
-                new_view.entries.push(record);
-            }
-        }
-
-        new_view
+        self.as_view_mut().select_where_mut(predicate)
     }
 
     /// Returns a DBView consisting on the entirety of `self`
     pub fn as_view<'a>(&'a self) -> DBView<'a, T> {
-        let mut new_view: DBView<'a, T> = DBView::new();
+        let mut new_view = DBView::<'a, T>{entries: Vec::new()};
         for record in & self.data {
             new_view.entries.push(record);
         }
@@ -103,8 +80,7 @@ impl<T> DB<T> {
 
     /// Returns a DBView consisting on the entirety of `self`
     pub fn as_view_mut<'a>(&'a mut self) -> DBViewMut<'a, T> {
-        let mut new_view: DBViewMut<'a, T> = DBViewMut::new();
-
+        let mut new_view = DBViewMut::<'a, T>{entries: Vec::new()};
         for record in &mut self.data {
             new_view.entries.push(record);
         }
@@ -119,21 +95,15 @@ impl<T> DB<T> {
 }
 
 impl<'a, T> DBView<'a, T> {
-    pub fn new() -> Self {
-        DBView{entries: vec!()}
-    }
-
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
     pub fn select_where<F>(&'a self, predicate: F) -> DBView<'a, T>
-        where F: Fn(&'a T) -> bool
+        where F: Fn(&T) -> bool
     {
-        let mut new_view: DBView<'a, T> = DBView::new();
-        for record in & self.entries {
-            if predicate(record) {
-                new_view.entries.push(record);
-            }
-        }
-        new_view
+        DBView::<'a, T>{entries: self.entries
+                            .iter()
+                            .filter(|x| predicate(x))
+                            .cloned()
+                            .collect()}
     }
 
     /// Returns the number of entries in the DBView
@@ -143,21 +113,14 @@ impl<'a, T> DBView<'a, T> {
 }
 
 impl<'a, T> DBViewMut<'a, T> {
-    pub fn new() -> Self {
-        DBViewMut{entries: vec!()}
-    }
-
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
     pub fn select_where_mut<F>(self, predicate: F) -> DBViewMut<'a, T>
-        where F: Fn(&'a T) -> bool
+        where F: Fn(&T) -> bool
     {
-        let mut new_view: DBViewMut<'a, T> = DBViewMut::new();
-        for record in self.entries {
-            if predicate(record) {
-                new_view.entries.push(record);
-            }
-        }
-        new_view
+        DBViewMut::<'a, T>{entries: self.entries
+                               .into_iter()
+                               .filter(|x| predicate(x))
+                               .collect()}
     }
 
     /// Returns the number of entries in the DBView
@@ -168,27 +131,42 @@ impl<'a, T> DBViewMut<'a, T> {
 
 // Bonus A
 //
-// impl<T> IntoIterator for DB<T> {
-//     type Item = T;
-//     // TODO
-// }
-//
-// impl<T> IntoIterator for &DB<T> {
-//     type Item = &T;
-//     // TODO
-// }
-//
-// impl<T> IntoIterator for &mut DB<T> {
-//     type Item = &mut T;
-//     // TODO
-// }
-//
-// impl<T> IntoIterator for DBView<T> {
-//     type Item = &T;
-//     // TODO
-// }
-//
-// impl<T> IntoIterator for DBViewMut<T> {
-//     type Item = &mut T;
-//     // TODO
-// }
+impl<T> IntoIterator for DB<T> {
+    type Item = T;
+    type IntoIter = ::std::vec::IntoIter<T>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.data.into_iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a DB<T> {
+    type Item = &'a T;
+    type IntoIter = ::std::slice::Iter<'a, T>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.data.iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a mut DB<T> {
+    type Item = &'a mut T;
+    type IntoIter = ::std::slice::IterMut<'a, T>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.data.iter_mut()
+    }
+}
+
+impl<'a, T> IntoIterator for DBView<'a, T> {
+    type Item = &'a T;
+    type IntoIter = ::std::vec::IntoIter<&'a T>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.entries.into_iter()
+    }
+}
+
+impl<'a, T> IntoIterator for DBViewMut<'a, T> {
+    type Item = &'a mut T;
+    type IntoIter = ::std::vec::IntoIter<&'a mut T>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.entries.into_iter()
+    }
+}
