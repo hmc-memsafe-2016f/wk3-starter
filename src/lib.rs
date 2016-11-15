@@ -5,8 +5,8 @@ pub struct DB<T> {
 
 /// An immutably borrowed subset of a DB
 ///
-/// NB: (nota bene, or "take special note"): You will need to be explcit about the liftimes in this
-/// struct
+/// NB: (nota bene, or "take special note"): You will need 
+/// to be explcit about the liftimes in this struct
 #[derive(Debug, PartialEq, Eq)]
 pub struct DBView<T> {
     entries: Vec<&T>,
@@ -27,8 +27,8 @@ pub fn filter_one<T, F>(view: &DBView<T>, predicate: F) -> DBView< T>
     unimplemented!()
 }
 
-/// Filters two DBView structs using the same predicate, producing two separate results. This is
-/// the moral equivalent of doing the two filters separately.
+/// Filters two DBView structs using the same predicate, producing two separate
+/// results. This is the moral equivalent of doing the two filters separately.
 pub fn filter_two<T, F>(view_a: &DBView<T>,
                         view_b: &DBView<T>,
                         predicate: F)
@@ -44,14 +44,16 @@ impl<T> DB<T> {
         unimplemented!()
     }
 
-    /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
+    /// Creates a new DBView containing all entries in `self`
+    /// which satisfy `predicate`
     pub fn select_where<F>(&self, predicate: F) -> DBView<T>
         where F: Fn(&T) -> bool
     {
         unimplemented!()
     }
 
-    /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
+    /// Creates a new DBView containing all entries in `self` 
+    /// which satisfy `predicate`
     pub fn select_where_mut<F>(&mut self, predicate: F) -> DBViewMut<T>
         where F: Fn(&T) -> bool
     {
@@ -75,7 +77,8 @@ impl<T> DB<T> {
 }
 
 impl<T> DBView<T> {
-    /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
+    /// Creates a new DBView containing all entries in `self`
+    /// which satisfy `predicate`
     pub fn select_where<F>(&self, predicate: F) -> DBView<T>
         where F: Fn(&T) -> bool
     {
@@ -89,7 +92,8 @@ impl<T> DBView<T> {
 }
 
 impl<T> DBViewMut<T> {
-    /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
+    /// Creates a new DBView containing all entries in `self` which
+    /// satisfy `predicate`
     pub fn select_where_mut<F>(self, predicate: F) -> DBViewMut<T>
         where F: Fn(&T) -> bool
     {
