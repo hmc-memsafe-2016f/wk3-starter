@@ -52,7 +52,7 @@ impl<T> DB<T> {
     pub fn select_where<'a, F>(&'a self, predicate: F) -> DBView<'a, T>
         where F: Fn(&T) -> bool
     {
-        DBView{ entries: self.data.iter().filter(|i| predicate(i)).collect() }
+        DBView{ entries: self.data.iter().filter(|i| predicate(i)).collect::<Vec<&'a T>>()}
     }
 
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
@@ -60,10 +60,11 @@ impl<T> DB<T> {
         where F: Fn(&T) -> bool
     {
         //don't know why this is giving me type mismatch errors
-        DBView{ entries: self.data.iter_mut().filter(|i| predicate(i)).collect::<Vec<&mut T>>() }
+        DBViewMut{entries: self.data.iter_mut().filter(|i| predicate(i)).collect::<Vec<&mut T>>()}
+    }
 
     /// Returns a DBView consisting on the entirety of `self`
-    pub fn as_view(&self) -> DBView<T> {
+    pub fn as_view<'a>(&'a self) -> DBView<'a, T> {
         DBView{ entries: self.data.iter().collect() }
     }
 
@@ -80,7 +81,7 @@ impl<T> DB<T> {
 
 impl<'a, T> DBView<'a, T> {
     /// Creates a new DBView containing all entries in `self` which satisfy `predicate`
-    pub fn select_where<F>(&'a self, predicate: F) -> DBView<T>
+    pub fn select_where<F>(&self, predicate: F) -> DBView<'a, T>
         where F: Fn(&T) -> bool
     {
         DBView{ entries: self.entries.clone().into_iter().filter(|x| predicate(x)).collect() }
